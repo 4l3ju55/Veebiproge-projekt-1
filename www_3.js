@@ -20,28 +20,54 @@ http.createServer(async function(req, res){
 	
 	//hakkame erinevaid lehti jaotama->routes
 	if(currentURL.pathname === '/'){
-		res.writeHead(200, {"Content-type": "text/html"});
+		res.writeHead(200, {"Content-type": "text/html; charset=utf-8"});
 		res.write(pageHead);
 		res.write(pageBanner);
 		res.write(pageBody);
+		res.write('\n\t<p><img src="avaleht.jpg" alt="Avalehe pilt" style="width: 3cm; height: 3cm; object-fit: contain;"></p>');
 		res.write('<p>' + dateET.weekDay() + '</p>' + '<p>' + dateET.fullDate(1) + '</p>' + '<p>' + dateET.fullTime() + '</p>');
 		res.write('\n\t<ul>');
 		res.write('\n\t\t<li><a href ="/vanasona">Tänane vanasõna</a></li>');
-		res.write('\n\t<ul>')
+		res.write('\n\t\t<li><a href="/minust">Miks tulin TLÜsse õppima</a></li>');
+		res.write('\n\t</ul>');
 		res.write(pageFoot);
 		//res.write('Veeb läkski käima!');
 	return res.end();
 	}
 	
 	else if (currentURL.pathname === '/vanasona'){
-		res.writeHead(200, {"Content-type": "text/html"});
+		let folkWisdomPath = path.join(__dirname, 'txt', 'vanasonad.txt');
+		
+		try {
+			let rawData = await fs.readFile(folkWisdomPath, 'utf8');
+			let folkWisdom = rawData.split(';');
+			let randomFolkWisdom = folkWisdom[Math.round(Math.random() * (folkWisdom.length - 1))];
+
+			// Kui lugemine õnnestus, väljastame lehe HTML-i
+			res.writeHead(200, {"Content-type": "text/html; charset=utf-8"});
+			res.write(pageHead);
+			res.write(pageBanner);
+			res.write('\t<h1>Eesti vanasõnad</h1>\n\t<p>Siin näed tänase päeva vanasõna.</p>\n\t<hr>');
+			res.write('\n\t<p><b>Tänane vanasõna:</b> ' + randomFolkWisdom + '</p>');
+			res.write('\n\t<p><a href="/">Tagasi avalehele</a></p>');
+			res.write(pageFoot);
+			return res.end();
+
+		} catch(err) {
+			res.writeHead(404, {"Content-type": "text/plain; charset=utf8"});
+			return res.end('Vanasõna ei leitud');
+		}
+	}
+	
+	else if (currentURL.pathname === '/minust'){
+		res.writeHead(200, {"Content-type": "text/html; charset=utf-8"});
 		res.write(pageHead);
 		res.write(pageBanner);
-		res.write('\t<h1>Eesti vanasõnad</h1>\n\t<p>Siin näed tänase päeva vanasõna.</p>\n\t<hr>');
-		res.write('\n\t<p><a href ="/">Tagasi avalehele</a></li>');
+		res.write('\t<h1>Miks tulin TLÜsse õppima?</h1>\n\t<p>Tulin TLÜsse, sest Eestis on bioloogia vaid kahes kohas ning Tartu on väga kaugel ja muuhulgas ka jälestusväärne koht:P</p>\n\t<hr>');
+		res.write('\n\t<p><img src="minust.jpg" alt="Minu pilt" style="width: 4cm; height: 4cm; object-fit: contain;"></p>');
+		res.write('\n\t<p><a href="/">Tagasi avalehele</a></p>');
 		res.write(pageFoot);
-	return res.end();
-		
+		return res.end();
 	}
 	
 	else if(currentURL.pathname === '/veebiprogrammeerimine_2026_TA.png'){
@@ -57,7 +83,20 @@ http.createServer(async function(req, res){
 		}
 	}
 	
+	else if(currentURL.pathname.endsWith('.jpg')){
+		let picPath = path.join(__dirname, 'Pic', currentURL.pathname);
+		try {
+			const data = await fs.readFile(picPath);
+			res.writeHead(200, {"Content-type": "image/jpeg"});
+			res.end(data);
+		} catch(err){
+			res.writeHead(404, {"Content-type": "text/plain; charset=utf8"});
+			return res.end('Pilti ei leitud');
+		}
+	}
+	
 	else {
+		res.writeHead(404, {"Content-type": "text/plain; charset=utf-8"});
 		res.end('Viga 404, ei leia sellist lehte!');
 	}
 }).listen(5134);
